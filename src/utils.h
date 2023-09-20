@@ -1,8 +1,7 @@
 ﻿#ifndef _OS_LOG_UTILS_H_
 #define _OS_LOG_UTILS_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #ifdef __linux__
@@ -39,10 +38,10 @@ bool os_utils_file_exist(const char * path);
 // 获取文件名
 bool os_utils_file_name(const char * path, char * file, size_t len);
 
-// 获取当前线程id
-long os_utils_tid();
-
 // 获取当前时间
 os_time_t * os_utils_time(os_time_t * tv);
+
+// 获取当前时间戳
+int64_t os_utils_time_ms();
 
 #endif

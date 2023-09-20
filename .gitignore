@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# project
+project/win/.vs/*
+project/win/obj/*
+bin/*
+lib/*
