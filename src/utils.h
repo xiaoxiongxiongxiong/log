@@ -5,11 +5,11 @@
 #include <stdbool.h>
 
 #ifdef __linux__
-#define OS_UTILS_FILE_MAX 256   // 文件名最大长度
+#define OS_UTILS_NAME_MAX 256   // 文件名最大长度
 #define OS_UTILS_PATH_MAX 4096  // 文件路径最大长度
 #define OS_UTILS_DISK_SEP '/'   // 路径分隔符
 #else
-#define OS_UTILS_FILE_MAX 260   // 文件名最大长度
+#define OS_UTILS_NAME_MAX 260   // 文件名最大长度
 #define OS_UTILS_PATH_MAX 260   // 文件路径最大长度
 #define OS_UTILS_DISK_SEP '\\'  // 路径分隔符
 #endif
@@ -38,10 +38,13 @@ bool os_utils_file_exist(const char * path);
 // 获取文件名
 bool os_utils_file_name(const char * path, char * file, size_t len);
 
-// 获取当前时间
-os_time_t * os_utils_time(os_time_t * tv);
-
 // 获取当前时间戳
 int64_t os_utils_time_ms();
+
+// 获取当前时间
+void os_utils_cur_time(os_time_t * tv);
+
+// 获取线程id
+int64_t os_utils_tid();
 
 #endif

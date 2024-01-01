@@ -67,7 +67,7 @@ bool os_queue_push(os_queue_t * oq, void * data)
     if (NULL == oq || NULL == data)
         return false;
 
-    os_queue_node_t * node = (os_queue_node_t *)malloc(sizeof(os_queue_node_t) + oq->cnt);
+    os_queue_node_t * node = (os_queue_node_t *)malloc(sizeof(os_queue_node_t) + oq->size);
     if (NULL == node)
         return false;
 
