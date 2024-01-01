@@ -32,5 +32,6 @@
 # project
 project/win/.vs/*
 project/win/obj/*
+project/win/*.user
 bin/*
 lib/*

@@ -18,13 +18,11 @@
 typedef struct _log_node_t
 {
     int line;                     // 日志所在行数
-    int len;                      // 日志消息长度
-    pthread_t tid;                // 线程id
+    int64_t tid;                  // 线程id
     LOG_MSG_LEVEL level;          // 日志级别
-    int64_t ts;                   // 日志打印时间戳
-    char * buff;                  // 日志消息，长度超出OS_LOG_MSG_MAX时启用
-    char file[OS_UTILS_FILE_MAX]; // 日志消息所在文件
-    char func[OS_UTILS_FILE_MAX]; // 日志消息所在函数
+    os_time_t tv;                 // 日志打印时间戳
+    char file[OS_UTILS_NAME_MAX]; // 日志消息所在文件
+    char func[OS_UTILS_NAME_MAX]; // 日志消息所在函数
     char msg[OS_LOG_MSG_MAX];     // 日志消息
 } log_node_t;
 
@@ -34,6 +32,7 @@ typedef struct _os_log_context_t
     size_t slice_duration;        // 切片时长
     size_t slice_size;            // 切片大小
     size_t slice_count;           // 切片个数
+    int64_t slice_ts;             // 切片创建时间
     FILE * fp;                    // 文件句柄
     LOG_MSG_LEVEL level;          // 保存到文件中的日志级别
     pthread_t thr;
@@ -55,6 +54,8 @@ static void log_msg_write_file(const log_node_t * node);
 static int os_log_startup();
 // 日志销毁
 static void os_log_cleanup();
+// 切割文件
+static bool os_log_split_file();
 
 int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
 {
@@ -157,7 +158,7 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
         return 0;
 
     log_node_t node = { 0 };
-    node.ts = os_utils_time_ms();
+    os_utils_cur_time(&node.tv);
     // 级别修正
     if (level >= LOG_LEVEL_DEBUG && level <= LOG_LEVEL_FATAL)
         node.level = level;
@@ -165,28 +166,17 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
         node.level = LOG_LEVEL_FATAL;
     node.line = line;
 
-    node.tid = pthread_self();
+    node.tid = os_utils_tid();
     if (NULL != file)
-        os_utils_file_name(file, node.file, OS_UTILS_FILE_MAX);
+        os_utils_file_name(file, node.file, OS_UTILS_NAME_MAX);
 
     // 所在函数
     if (func)
-        strncpy(node.func, func, OS_UTILS_FILE_MAX - 1);
+        strncpy(node.func, func, OS_UTILS_NAME_MAX - 1);
 
     // 格式化日志
     int len = vsnprintf(node.msg, sizeof(node.msg), fmt, vl);
-    if (len > sizeof(node.msg) - 1)
-    {
-        node.len = len + 1;
-        node.buff = (char *)malloc((size_t)node.len);
-        if (NULL == node.buff)
-        {
-            fprintf(stderr, "No enough memory\n");
-            return -1;
-        }
-        vsnprintf(node.buff, len, fmt, vl);
-        node.buff[len] = '\0';
-    }
+
     pthread_mutex_lock(&g_log_ctx.mtx);
     os_queue_push(g_log_ctx.oq, &node);
     pthread_cond_signal(&g_log_ctx.cond);
@@ -247,13 +237,57 @@ void os_log_cleanup()
     pthread_mutex_destroy(&g_log_ctx.mtx);
 }
 
+bool os_log_split_file()
+{
+    char * ext = NULL;
+    size_t ext_len = 0ul;
+    char tmp[OS_UTILS_PATH_MAX] = { 0 };
+    char name[OS_UTILS_NAME_MAX] = { 0 };
+
+    if (NULL == g_log_ctx.fp && '\0' == g_log_ctx.path[0])
+        return true;
+
+    if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_NAME_MAX))
+    {
+        fprintf(stderr, "Get path %s name failed.\n", g_log_ctx.path);
+        return false;
+    }
+
+    ext = strstr(name, ".");
+    if (NULL != ext)
+        ext_len = strlen(ext);
+
+    strncpy(tmp, g_log_ctx.path, strlen(g_log_ctx.path) - strlen(name));
+    strncat(tmp, name, strlen(name) - ext_len);
+    snprintf(tmp, OS_UTILS_PATH_MAX, "%s_%zu%s", tmp, ++g_log_ctx.slice_count, ext);
+    if (!os_utils_create_directory(tmp))
+    {
+        fprintf(stderr, "Create path %s failed.\n", tmp);
+        return false;
+    }
+
+    if (0 != rename(g_log_ctx.path, tmp))
+    {
+        fprintf(stderr, "Unable to rename the file %s to %s.\n", g_log_ctx.path, tmp);
+        return false;
+    }
+    g_log_ctx.slice_ts = os_utils_time_ms();
+    g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
+    if (NULL == g_log_ctx.fp)
+    {
+        fprintf(stderr, "reopen %s failed.\n", g_log_ctx.path);
+        return false;
+    }
+    return true;
+}
+
 void log_msg_deal_thr(void * arg)
 {
     os_log_context_t * ctx = (os_log_context_t *)arg;
     if (NULL == ctx)
         return;
 
-    while (&ctx->inited)
+    while (ctx->inited)
     {
         pthread_mutex_lock(&ctx->mtx);
         while (os_queue_empty(ctx->oq) && &ctx->inited)
@@ -282,10 +316,11 @@ void log_msg_deal_thr(void * arg)
 
 void log_msg_write_file(const log_node_t * node)
 {
+    char date_str[OS_LOG_DATE_MAX] = { 0 };
     char log_buf[OS_LOG_LINE_MAX] = { 0 };
-    //snprintf(log_buf, OS_LOG_LINE_MAX, "[%s][%s][%ld][%s:%d][%s] %s\n",
-    //         node.date, g_level_str[node.level], node.tid, node.file,
-    //         node.line, node.func, node.msg);
+    snprintf(log_buf, OS_LOG_LINE_MAX, "[%04d/%02d/%02d %02d:%02d:%02d.%03d][%s][%" PRId64 "][%s:%d][%s] %s\n",
+             node->tv.year, node->tv.month, node->tv.day, node->tv.hour, node->tv.minute, node->tv.second, node->tv.millisecond,
+             g_level_str[node->level], node->tid, node->file, node->line, node->func, node->msg);
 
 #ifndef NDEBUG
     fflush(stdout);
@@ -299,7 +334,7 @@ void log_msg_write_file(const log_node_t * node)
 
     if (node->level >= g_log_ctx.level)
     {
-        if (!os_utils_file_exist(g_log_ctx.path))
+        if (NULL != g_log_ctx.fp && !os_utils_file_exist(g_log_ctx.path))
         {
             os_utils_create_directory(g_log_ctx.path);
             g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
