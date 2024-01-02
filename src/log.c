@@ -9,6 +9,7 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
+#include <sys/stat.h>
 #endif
 
 #define OS_LOG_DATE_MAX 32       // 日志时间长度 
@@ -85,6 +86,7 @@ int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
             return -1;
         }
         strncpy(g_log_ctx.path, file, OS_UTILS_PATH_MAX - 1);
+        g_log_ctx.slice_ts = os_utils_time_ms();
     }
 
     g_log_ctx.oq = os_queue_create(sizeof(log_node_t));
@@ -244,9 +246,6 @@ bool os_log_split_file()
     char tmp[OS_UTILS_PATH_MAX] = { 0 };
     char name[OS_UTILS_NAME_MAX] = { 0 };
 
-    if (NULL == g_log_ctx.fp && '\0' == g_log_ctx.path[0])
-        return true;
-
     if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_NAME_MAX))
     {
         fprintf(stderr, "Get path %s name failed.\n", g_log_ctx.path);
@@ -351,5 +350,29 @@ void log_msg_write_file(const log_node_t * node)
             else
                 fflush(g_log_ctx.fp);
         }
+    }
+
+    if (NULL == g_log_ctx.fp || '\0' == g_log_ctx.path[0])
+        return;
+
+    if (g_log_ctx.slice_size > 0)
+    {
+        struct stat st = { 0 };
+        if (0 != stat(g_log_ctx.path, &st))
+        {
+            const int code = errno;
+            fprintf(stderr, "stat %s failed for %s\n", g_log_ctx.path, strerror(code));
+            return;
+        }
+
+        if (g_log_ctx.slice_size < st.st_size)
+            os_log_split_file();
+    }
+
+    if (g_log_ctx.slice_duration > 0)
+    {
+        const int64_t cur_ts = os_utils_time_ms();
+        if (cur_ts - g_log_ctx.slice_ts > g_log_ctx.slice_duration)
+            os_log_split_file();
     }
 }
