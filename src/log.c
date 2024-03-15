@@ -5,11 +5,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 #include <pthread.h>
 
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
 #include <sys/stat.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #define OS_LOG_DATE_MAX 32       // 日志时间长度 
@@ -160,7 +165,7 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
         return 0;
 
     log_node_t node = { 0 };
-    os_utils_cur_time(&node.tv);
+    os_utils_time(&node.tv);
     // 级别修正
     if (level >= LOG_LEVEL_DEBUG && level <= LOG_LEVEL_FATAL)
         node.level = level;

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __linux__
 #define OS_UTILS_NAME_MAX 256   // 文件名最大长度
@@ -42,7 +43,7 @@ bool os_utils_file_name(const char * path, char * file, size_t len);
 int64_t os_utils_time_ms();
 
 // 获取当前时间
-void os_utils_cur_time(os_time_t * tv);
+void os_utils_time(os_time_t * tv);
 
 // 获取线程id
 int64_t os_utils_tid();

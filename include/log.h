@@ -2,6 +2,7 @@
 #define _OS_LOG_H_
 
 #include <stdio.h>
+#include <stddef.h>
 #include <stdarg.h>
 #include <inttypes.h>
 

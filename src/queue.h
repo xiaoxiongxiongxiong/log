@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct _os_queue_t os_queue_t;
 typedef struct _os_queue_node_t os_queue_node_t;

@@ -32,6 +32,7 @@ static int g_is_running = 1;
 
 int main(int argc, char * argv[])
 {
+    int i, j;
     cmd_args_t args = { 0 };
     if (0 != parse_cmd_args(argc, argv, &args))
     {
@@ -47,11 +48,11 @@ int main(int argc, char * argv[])
     }
     atexit(log_msg_uninit);
 
-    for (int i = 0; i < args.mis_cnt; ++i)
+    for (i = 0; i < args.mis_cnt; ++i)
     {
         if (0 == g_is_running)
             break;
-        for (int j = 0; j < args.mis[i].times; ++j)
+        for (j = 0; j < args.mis[i].times; ++j)
         {
             if (0 == g_is_running)
                 break;
@@ -91,6 +92,7 @@ void show_usage()
 
 static int parse_msg_info(int index, int argc, char * argv[], cmd_args_t * args)
 {
+    size_t i;
     int ret = index;
     char * buff = argv[index] + 10;
     if (NULL == buff || '[' != buff[0])
@@ -109,7 +111,7 @@ static int parse_msg_info(int index, int argc, char * argv[], cmd_args_t * args)
 
     args->mis = (msg_info_t *)realloc(args->mis, sizeof(msg_info_t) * (args->mis_cnt + 1ul));
 
-    for (size_t i = 0ul; i < len; ++i)
+    for (i = 0ul; i < len; ++i)
     {
         if ('[' == buff[i])
         {
@@ -148,8 +150,18 @@ static int parse_msg_info(int index, int argc, char * argv[], cmd_args_t * args)
     return -1;
 }
 
+static char * os_strdup(const char * str)
+{
+#ifdef __linux__
+    return strdup(str);
+#else
+    return _strdup(str);
+#endif
+}
+
 int parse_cmd_args(int argc, char * argv[], cmd_args_t * args)
 {
+    int i;
     if (argc <= 1)
     {
         fprintf(stderr, "Input params is empty\n");
@@ -159,10 +171,10 @@ int parse_cmd_args(int argc, char * argv[], cmd_args_t * args)
     char * log_level = NULL;
     char * slice_size = NULL;
     char * slice_duration = NULL;
-    for (int i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
         if (0 == strncmp(argv[i], "--log_path=", 11))
-            args->path = _strdup(argv[i] + 11);
+            args->path = os_strdup(argv[i] + 11);
         else if (0 == strncmp(argv[i], "--log_level=", 12))
             log_level = argv[i] + 12;
         else if (0 == strncmp(argv[i], "--slice_size=", 13))
@@ -188,7 +200,7 @@ int parse_cmd_args(int argc, char * argv[], cmd_args_t * args)
     {
         char * end_str = NULL;
         long val = strtol(log_level, &end_str, 10);
-        if (NULL != end_str || val < LOG_LEVEL_DEBUG || val > LOG_LEVEL_FATAL)
+        if ((NULL != end_str && '\0' != end_str[0]) || val < LOG_LEVEL_DEBUG || val > LOG_LEVEL_FATAL)
             fprintf(stderr, "Log level %s is invalid\n", log_level);
         else
             args->level = (LOG_MSG_LEVEL)val;
@@ -219,6 +231,7 @@ int parse_cmd_args(int argc, char * argv[], cmd_args_t * args)
 
 void release_cmd_args(cmd_args_t * args)
 {
+    int i;
     if (NULL == args)
         return;
 
@@ -228,7 +241,7 @@ void release_cmd_args(cmd_args_t * args)
         args->path = NULL;
     }
 
-    for (int i = 0; i < args->mis_cnt; ++i)
+    for (i = 0; i < args->mis_cnt; ++i)
     {
         free(args->mis[i].msg);
         args->mis[i].msg = NULL;
