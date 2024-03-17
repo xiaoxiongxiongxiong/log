@@ -294,7 +294,7 @@ void log_msg_deal_thr(void * arg)
     while (ctx->inited)
     {
         pthread_mutex_lock(&ctx->mtx);
-        while (os_queue_empty(ctx->oq) && &ctx->inited)
+        while (os_queue_empty(ctx->oq) && ctx->inited)
         {
             pthread_cond_wait(&ctx->cond, &ctx->mtx);
         }
