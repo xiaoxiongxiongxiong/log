@@ -103,7 +103,7 @@ void os_utils_time(os_time_t * tv)
     tv->hour = tmp->tm_hour;
     tv->minute = tmp->tm_min;
     tv->second = tmp->tm_sec;
-    tv->millisecond = (int)ts % 1000;
+    tv->millisecond = (int)(ts % 1000);
 #else
     SYSTEMTIME st = { 0 };
     GetSystemTime(&st);
