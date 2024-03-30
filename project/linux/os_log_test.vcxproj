@@ -71,11 +71,11 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\utils\include\;$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\utils\lib\$(Platform)\$(Configuration)\;$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LibraryDependencies>pthread;os_utils;os_log;%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LibraryDependencies>pthread;os_log;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <RemotePostBuildEvent>
       <Command>cp -f $(RemoteProjectDir)../utils/lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/; cp -f $(RemoteProjectDir)lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/</Command>
@@ -83,11 +83,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\utils\include\;$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\utils\lib\$(Platform)\$(Configuration)\;$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LibraryDependencies>pthread;os_utils;os_log;%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LibraryDependencies>pthread;os_log;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <RemotePostBuildEvent>
       <Command>cp -f $(RemoteProjectDir)../utils/lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/; cp -f $(RemoteProjectDir)lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/</Command>
@@ -95,11 +95,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\utils\include\;$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\utils\lib\$(Platform)\$(Configuration)\;$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LibraryDependencies>pthread;os_utils;os_log;%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LibraryDependencies>pthread;os_log;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <RemotePostBuildEvent>
       <Command>cp -f $(RemoteProjectDir)../utils/lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/; cp -f $(RemoteProjectDir)lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/</Command>
@@ -107,11 +107,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\utils\include\;$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\utils\lib\$(Platform)\$(Configuration)\;$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <LibraryDependencies>pthread;os_utils;os_log;%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LibraryDependencies>pthread;os_log;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <RemotePostBuildEvent>
       <Command>cp -f $(RemoteProjectDir)../utils/lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/; cp -f $(RemoteProjectDir)lib/$(Platform)/$(Configuration)/*.so $(RemoteProjectDir)bin/$(Platform)/$(Configuration)/</Command>

@@ -1,7 +1,10 @@
 ﻿#include "log.h"
 #include <stdlib.h>
-#include <string.h>
 #include <malloc.h>
+#ifndef __USE_XOPEN2K8
+#define __USE_XOPEN2K8
+#endif
+#include <string.h>
 
 // [repeat times][level][msg]
 typedef struct _msg_info_t
@@ -93,7 +96,6 @@ void show_usage()
 static int parse_msg_info(int index, int argc, char * argv[], cmd_args_t * args)
 {
     size_t i;
-    int ret = index;
     char * buff = argv[index] + 10;
     if (NULL == buff || '[' != buff[0])
     {
@@ -103,13 +105,12 @@ static int parse_msg_info(int index, int argc, char * argv[], cmd_args_t * args)
 
     int got = 0;
     int flag = 0;
-    char * msg = NULL;
     char log_level[4] = { 0 };
     char repeat_times[16] = { 0 };
     const size_t len = strlen(buff);
     size_t pos = 0ul;
 
-    args->mis = (msg_info_t *)realloc(args->mis, sizeof(msg_info_t) * (args->mis_cnt + 1ul));
+    args->mis = (msg_info_t *)realloc(args->mis, sizeof(msg_info_t) * ((size_t)args->mis_cnt + 1ul));
 
     for (i = 0ul; i < len; ++i)
     {

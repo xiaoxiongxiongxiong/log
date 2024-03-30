@@ -22,13 +22,13 @@ bool os_utils_work_path(char * path, size_t len)
 {
     char tmp[OS_UTILS_PATH_MAX] = { 0 };
 #ifdef __linux__
-    ssize_t bytes = readlink("/proc/self/exe", tmp, PATH_MAX);
+    ssize_t bytes = readlink("/proc/self/exe", tmp, OS_UTILS_PATH_MAX);
     if (-1 == bytes)
     {
         const int code = errno;
         printf("readlink failed for %s.\n", strerror(code));
         return NULL;
-}
+    }
 
     if (NULL != path && len > 0)
     {
@@ -103,7 +103,7 @@ void os_utils_time(os_time_t * tv)
     tv->hour = tmp->tm_hour;
     tv->minute = tmp->tm_min;
     tv->second = tmp->tm_sec;
-    tv->millisecond = ts % 1000;
+    tv->millisecond = (int)ts % 1000;
 #else
     SYSTEMTIME st = { 0 };
     GetSystemTime(&st);
