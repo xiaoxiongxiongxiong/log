@@ -320,7 +320,6 @@ void log_msg_deal_thr(void * arg)
 
 void log_msg_write_file(const log_node_t * node)
 {
-    char date_str[OS_LOG_DATE_MAX] = { 0 };
     char log_buf[OS_LOG_LINE_MAX] = { 0 };
     snprintf(log_buf, OS_LOG_LINE_MAX, "[%04d/%02d/%02d %02d:%02d:%02d.%03d][%s][%" PRId64 "][%s:%d][%s] %s\n",
              node->tv.year, node->tv.month, node->tv.day, node->tv.hour, node->tv.minute, node->tv.second, node->tv.millisecond,

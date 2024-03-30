@@ -33,6 +33,8 @@
 project/win/.vs/*
 project/win/obj/*
 project/win/*.user
+project/linux/obj/*
+project/linux/*.user
 bin/*
 lib/*
 .vs
