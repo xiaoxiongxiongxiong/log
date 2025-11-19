@@ -1,6 +1,9 @@
 ﻿#include "log.h"
-#include "utils.h"
-#include "queue.h"
+
+#include "os_utils.h"
+#include "os_time.h"
+#include "os_directory.h"
+#include "os_queue.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -27,8 +30,8 @@ typedef struct _log_node_t
     int64_t tid;                  // 线程id
     LOG_MSG_LEVEL level;          // 日志级别
     os_time_t tv;                 // 日志打印时间戳
-    char file[OS_UTILS_NAME_MAX]; // 日志消息所在文件
-    char func[OS_UTILS_NAME_MAX]; // 日志消息所在函数
+    char file[OS_UTILS_FILE_MAX]; // 日志消息所在文件
+    char func[OS_UTILS_FILE_MAX]; // 日志消息所在函数
     char msg[OS_LOG_MSG_MAX];     // 日志消息
 } log_node_t;
 
@@ -77,7 +80,7 @@ int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
 
     if (NULL != file && '\0' != file[0])
     {
-        if (!os_utils_create_directory(file))
+        if (os_directory_create(file) < 0)
         {
             const int code = errno;
             fprintf(stderr, "Create directory failed for %s\n", strerror(code));
@@ -91,7 +94,7 @@ int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
             return -1;
         }
         strncpy(g_log_ctx.path, file, OS_UTILS_PATH_MAX - 1);
-        g_log_ctx.slice_ts = os_utils_time_ms();
+        g_log_ctx.slice_ts = os_time_ms();
     }
 
     g_log_ctx.oq = os_queue_create(sizeof(log_node_t));
@@ -165,7 +168,7 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
         return 0;
 
     log_node_t node = { 0 };
-    os_utils_time(&node.tv);
+    node.tv = os_time_by_ms(os_time_ms());
     // 级别修正
     if (level >= LOG_LEVEL_DEBUG && level <= LOG_LEVEL_FATAL)
         node.level = level;
@@ -175,11 +178,11 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
 
     node.tid = os_utils_tid();
     if (NULL != file)
-        os_utils_file_name(file, node.file, OS_UTILS_NAME_MAX);
+        os_utils_file_name(file, node.file, OS_UTILS_FILE_MAX);
 
     // 所在函数
     if (func)
-        strncpy(node.func, func, OS_UTILS_NAME_MAX - 1);
+        strncpy(node.func, func, OS_UTILS_FILE_MAX - 1);
 
     // 格式化日志
     int len = vsnprintf(node.msg, sizeof(node.msg), fmt, vl);
@@ -249,9 +252,9 @@ bool os_log_split_file()
     char * ext = NULL;
     size_t ext_len = 0ul;
     char tmp[OS_UTILS_PATH_MAX] = { 0 };
-    char name[OS_UTILS_NAME_MAX] = { 0 };
+    char name[OS_UTILS_FILE_MAX] = { 0 };
 
-    if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_NAME_MAX))
+    if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_FILE_MAX))
     {
         fprintf(stderr, "Get path %s name failed.\n", g_log_ctx.path);
         return false;
@@ -264,7 +267,7 @@ bool os_log_split_file()
     strncpy(tmp, g_log_ctx.path, strlen(g_log_ctx.path) - strlen(name));
     strncat(tmp, name, strlen(name) - ext_len);
     snprintf(tmp, OS_UTILS_PATH_MAX, "%s_%zu%s", tmp, ++g_log_ctx.slice_count, ext);
-    if (!os_utils_create_directory(tmp))
+    if (os_directory_create(tmp) < 0)
     {
         fprintf(stderr, "Create path %s failed.\n", tmp);
         return false;
@@ -275,7 +278,7 @@ bool os_log_split_file()
         fprintf(stderr, "Unable to rename the file %s to %s.\n", g_log_ctx.path, tmp);
         return false;
     }
-    g_log_ctx.slice_ts = os_utils_time_ms();
+    g_log_ctx.slice_ts = os_time_ms();
     g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
     if (NULL == g_log_ctx.fp)
     {
@@ -337,9 +340,9 @@ void log_msg_write_file(const log_node_t * node)
 
     if (node->level >= g_log_ctx.level)
     {
-        if (NULL != g_log_ctx.fp && !os_utils_file_exist(g_log_ctx.path))
+        if (NULL != g_log_ctx.fp && os_directory_exist(g_log_ctx.path) < 0)
         {
-            os_utils_create_directory(g_log_ctx.path);
+            os_directory_create(g_log_ctx.path);
             g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
         }
 
@@ -375,8 +378,8 @@ void log_msg_write_file(const log_node_t * node)
 
     if (g_log_ctx.slice_duration > 0)
     {
-        const int64_t cur_ts = os_utils_time_ms();
-        if (cur_ts - g_log_ctx.slice_ts > g_log_ctx.slice_duration)
+        const int64_t cur_ts = os_time_ms();
+        if (cur_ts - g_log_ctx.slice_ts > (int64_t)g_log_ctx.slice_duration)
             os_log_split_file();
     }
 }
