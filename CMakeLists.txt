@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
 project(os_log LANGUAGES C)
 
 if(CMAKE_HOST_WIN32)
@@ -18,6 +22,8 @@ else()
     set(OS_LOG_DEP_LIBS pthread)
 endif()
 
+add_subdirectory(deps/utils)
+add_subdirectory(deps/libos)
 add_subdirectory(src)
 
 option(OS_LOG_WITH_TEST_PROGRAMS "build with test programs" OFF)

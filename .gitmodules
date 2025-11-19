@@ -1,0 +1,6 @@
+[submodule "deps/utils"]
+	path = deps/utils
+	url = https://github.com/xiaoxiongxiongxiong/utils.git
+[submodule "deps/libos"]
+	path = deps/libos
+	url = https://github.com/xiaoxiongxiongxiong/libos.git
