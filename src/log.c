@@ -3,7 +3,7 @@
 #include "os_utils.h"
 #include "os_time.h"
 #include "os_directory.h"
-#include "os_queue.h"
+#include "queue.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
