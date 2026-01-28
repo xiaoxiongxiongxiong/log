@@ -23,7 +23,6 @@ else()
 endif()
 
 add_subdirectory(deps/utils)
-add_subdirectory(deps/libos)
 add_subdirectory(src)
 
 option(OS_LOG_WITH_TEST_PROGRAMS "build with test programs" OFF)
