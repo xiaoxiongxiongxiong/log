@@ -24,8 +24,7 @@
 #define OS_LOG_MSG_MAX  3072     // 日志信息最大长度
 #define OS_LOG_LINE_MAX 4096     // 日志每行打印的最大字节数
 
-typedef struct _log_node_t
-{
+typedef struct _log_node_t {
     int line;                     // 日志所在行数
     int64_t tid;                  // 线程id
     LOG_MSG_LEVEL level;          // 日志级别
@@ -35,8 +34,7 @@ typedef struct _log_node_t
     char msg[OS_LOG_MSG_MAX];     // 日志消息
 } log_node_t;
 
-typedef struct _os_log_context_t
-{
+typedef struct _os_log_context_t {
     char path[OS_UTILS_PATH_MAX]; // 日志路径
     size_t slice_duration;        // 切片时长
     size_t slice_size;            // 切片大小
@@ -78,17 +76,14 @@ int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
     else
         g_log_ctx.level = level;
 
-    if (NULL != file && '\0' != file[0])
-    {
-        if (os_directory_create(file) < 0)
-        {
+    if (NULL != file && '\0' != file[0]) {
+        if (os_directory_create(file) < 0) {
             const int code = errno;
             fprintf(stderr, "Create directory failed for %s\n", strerror(code));
             return -1;
         }
         g_log_ctx.fp = fopen(file, "a");
-        if (NULL == g_log_ctx.fp)
-        {
+        if (NULL == g_log_ctx.fp) {
             const int code = errno;
             fprintf(stderr, "Open file failed for %s\n", strerror(code));
             return -1;
@@ -98,15 +93,13 @@ int log_msg_init(const char * file, const LOG_MSG_LEVEL level)
     }
 
     g_log_ctx.oq = os_queue_create(sizeof(log_node_t));
-    if (NULL == g_log_ctx.oq)
-    {
+    if (NULL == g_log_ctx.oq) {
         log_msg_uninit();
         fprintf(stderr, "Create log queue failed\n");
         return -1;
     }
 
-    if (0 != os_log_startup())
-    {
+    if (0 != os_log_startup()) {
         log_msg_uninit();
         fprintf(stderr, "Create thread failed\n");
         return -1;
@@ -119,8 +112,7 @@ void log_msg_uninit(void)
 {
     os_log_cleanup();
 
-    if (NULL != g_log_ctx.fp)
-    {
+    if (NULL != g_log_ctx.fp) {
         fclose(g_log_ctx.fp);
         g_log_ctx.fp = NULL;
     }
@@ -134,16 +126,14 @@ void log_msg_uninit(void)
 
 void log_msg_set_slice_duration(const size_t ms)
 {
-    if (0ULL != ms)
-    {
+    if (0ULL != ms) {
         g_log_ctx.slice_duration = ms;
     }
 }
 
 void log_msg_set_slice_size(const size_t kb)
 {
-    if (0ULL != kb)
-    {
+    if (0ULL != kb) {
         g_log_ctx.slice_size = kb;
     }
 }
@@ -193,8 +183,7 @@ int log_msg_doit(const LOG_MSG_LEVEL level, const char * file, const int line, c
     pthread_mutex_unlock(&g_log_ctx.mtx);
 
     // 根据级别判定是否退出
-    if (level == LOG_LEVEL_FATAL)
-    {
+    if (level == LOG_LEVEL_FATAL) {
         log_msg_uninit();  //日志反初始化并杀掉当前进程
         exit(EXIT_FAILURE);
     }
@@ -206,16 +195,14 @@ int os_log_startup()
 {
     g_log_ctx.inited = true;
     int ret = pthread_cond_init(&g_log_ctx.cond, NULL);
-    if (0 != ret)
-    {
+    if (0 != ret) {
         fprintf(stderr, "pthread_cond_init failed\n");
         g_log_ctx.inited = false;
         return -1;
     }
 
     ret = pthread_mutex_init(&g_log_ctx.mtx, NULL);
-    if (0 != ret)
-    {
+    if (0 != ret) {
         fprintf(stderr, "pthread_mutex_init failed\n");
         pthread_cond_destroy(&g_log_ctx.cond);
         g_log_ctx.inited = false;
@@ -223,8 +210,7 @@ int os_log_startup()
     }
 
     ret = pthread_create(&g_log_ctx.thr, NULL, (void *)log_msg_deal_thr, (void *)&g_log_ctx);
-    if (0 != ret)
-    {
+    if (0 != ret) {
         fprintf(stderr, "pthread_create failed\n");
         pthread_cond_destroy(&g_log_ctx.cond);
         pthread_mutex_destroy(&g_log_ctx.mtx);
@@ -254,8 +240,7 @@ bool os_log_split_file()
     char tmp[OS_UTILS_PATH_MAX] = { 0 };
     char name[OS_UTILS_FILE_MAX] = { 0 };
 
-    if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_FILE_MAX))
-    {
+    if (!os_utils_file_name(g_log_ctx.path, name, OS_UTILS_FILE_MAX)) {
         fprintf(stderr, "Get path %s name failed.\n", g_log_ctx.path);
         return false;
     }
@@ -267,21 +252,18 @@ bool os_log_split_file()
     strncpy(tmp, g_log_ctx.path, strlen(g_log_ctx.path) - strlen(name));
     strncat(tmp, name, strlen(name) - ext_len);
     snprintf(tmp, OS_UTILS_PATH_MAX, "%s_%zu%s", tmp, ++g_log_ctx.slice_count, ext);
-    if (os_directory_create(tmp) < 0)
-    {
+    if (os_directory_create(tmp) < 0) {
         fprintf(stderr, "Create path %s failed.\n", tmp);
         return false;
     }
 
-    if (0 != rename(g_log_ctx.path, tmp))
-    {
+    if (0 != rename(g_log_ctx.path, tmp)) {
         fprintf(stderr, "Unable to rename the file %s to %s.\n", g_log_ctx.path, tmp);
         return false;
     }
     g_log_ctx.slice_ts = os_time_ms();
     g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
-    if (NULL == g_log_ctx.fp)
-    {
+    if (NULL == g_log_ctx.fp) {
         fprintf(stderr, "reopen %s failed.\n", g_log_ctx.path);
         return false;
     }
@@ -294,16 +276,14 @@ void log_msg_deal_thr(void * arg)
     if (NULL == ctx)
         return;
 
-    while (ctx->inited)
-    {
+    while (ctx->inited) {
         pthread_mutex_lock(&ctx->mtx);
         while (os_queue_empty(ctx->oq) && ctx->inited)
         {
             pthread_cond_wait(&ctx->cond, &ctx->mtx);
         }
 
-        while (!os_queue_empty(ctx->oq))
-        {
+        while (!os_queue_empty(ctx->oq)) {
             os_queue_node_t * node = os_queue_front(ctx->oq);
             log_node_t * data = (log_node_t *)os_queue_getdata(node);
             log_msg_write_file(data);
@@ -312,8 +292,7 @@ void log_msg_deal_thr(void * arg)
         pthread_mutex_unlock(&ctx->mtx);
     }
 
-    while (!os_queue_empty(ctx->oq))
-    {
+    while (!os_queue_empty(ctx->oq)) {
         os_queue_node_t * node = os_queue_front(ctx->oq);
         log_node_t * data = (log_node_t *)os_queue_getdata(node);
         log_msg_write_file(data);
@@ -338,23 +317,18 @@ void log_msg_write_file(const log_node_t * node)
     OutputDebugStringA(log_buf);
 #endif
 
-    if (node->level >= g_log_ctx.level)
-    {
-        if (NULL != g_log_ctx.fp && os_directory_exist(g_log_ctx.path) < 0)
-        {
+    if (node->level >= g_log_ctx.level) {
+        if (NULL != g_log_ctx.fp && os_directory_exist(g_log_ctx.path) < 0) {
             os_directory_create(g_log_ctx.path);
             g_log_ctx.fp = freopen(g_log_ctx.path, "a", g_log_ctx.fp);
         }
 
-        if (NULL != g_log_ctx.fp)
-        {
-            if (EOF == fputs(log_buf, g_log_ctx.fp))  // 写入文件失败时打印到控制台
-            {
+        if (NULL != g_log_ctx.fp) {
+            if (EOF == fputs(log_buf, g_log_ctx.fp)) { // 写入文件失败时打印到控制台
                 fflush(stdout);
                 fputs(log_buf, stderr);
                 fflush(stderr);
-            }
-            else
+            } else
                 fflush(g_log_ctx.fp);
         }
     }
@@ -362,11 +336,9 @@ void log_msg_write_file(const log_node_t * node)
     if (NULL == g_log_ctx.fp || '\0' == g_log_ctx.path[0])
         return;
 
-    if (g_log_ctx.slice_size > 0)
-    {
+    if (g_log_ctx.slice_size > 0) {
         struct stat st = { 0 };
-        if (0 != stat(g_log_ctx.path, &st))
-        {
+        if (0 != stat(g_log_ctx.path, &st)) {
             const int code = errno;
             fprintf(stderr, "stat %s failed for %s\n", g_log_ctx.path, strerror(code));
             return;
@@ -376,8 +348,7 @@ void log_msg_write_file(const log_node_t * node)
             os_log_split_file();
     }
 
-    if (g_log_ctx.slice_duration > 0)
-    {
+    if (g_log_ctx.slice_duration > 0) {
         const int64_t cur_ts = os_time_ms();
         if (cur_ts - g_log_ctx.slice_ts > (int64_t)g_log_ctx.slice_duration)
             os_log_split_file();
